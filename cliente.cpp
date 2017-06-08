@@ -4,6 +4,8 @@
 #include <bits/stdc++.h>
 #include <unordered_map>
 #include <dirent.h>
+#include <pthread.h>
+#include <unistd.h>
 #define BUF_SIZE 1024
 using namespace std;
 
@@ -21,8 +23,10 @@ int puertoEliminar=7745;
 int puertoEscucha=7746;
 int puertoArchivos=7747;
 
+//Sockets compartidos
+SocketDatagrama socketServicio(puertoServicios);
 
-//Definir estructura de mensaje
+
 //Estructura usada para realizar una peticion
 struct Peticion{
     int codigo;
@@ -37,25 +41,51 @@ struct Respuesta{
 
 //Hilos
 void* detectarServicios(void*);
+void* broadcast(void*);
 void* eliminar(void*);
 void* escuchar(void*);
 void* manejoDirectorios(void*);
 
 int main(){
 	
-	pthread_t th[4];
+	pthread_t th[5];
 
-    //pthread_create(&th[0], NULL, detectarServicios, NULL); 
-    //pthread_create(&th[1], NULL, eliminar, NULL);
-	//pthread_create(&th[2], NULL, escuchar, NULL); 
-    pthread_create(&th[3], NULL, manejoDirectorios, NULL);
+    pthread_create(&th[0], NULL, detectarServicios, NULL); 
+    pthread_create(&th[1], NULL, broadcast, NULL); 
+    //pthread_create(&th[2], NULL, eliminar, NULL);
+	//pthread_create(&th[3], NULL, escuchar, NULL); 
+    pthread_create(&th[4], NULL, manejoDirectorios, NULL);
 
-    //pthread_join(th[0], NULL);
-    //pthread_join(th[1], NULL);
+    pthread_join(th[0], NULL);
+    pthread_join(th[1], NULL);
     //pthread_join(th[2], NULL);
-    pthread_join(th[3], NULL);
+    //pthread_join(th[3], NULL);
+    pthread_join(th[4], NULL);
 	
 	return 0;
+}
+
+void* broadcast(void*){
+    int num[2];
+    num[1]=5;
+    num[0]=3;
+    while(1){
+        cout<<"Enviando mi direccion\n";
+        PaqueteDatagrama  p((char *)num, 2*sizeof(int), (char*) direccionBroadcast.c_str(), puertoServicios); 
+        socketServicio.envia(p);
+        sleep(10);
+    }
+}
+
+void* detectarServicios(void*){
+    cout<<"Esperando servicios disponibles\n";
+    PaqueteDatagrama p2(sizeof(int));
+    while(1){   
+        socketServicio.recibe(p2);
+        cout<<"Servico disponible en: "<<p2.obtieneDireccion()<<'\n';
+        IPS.push_back(string(p2.obtieneDireccion()));
+        //sleep(10);
+    }   
 }
 
 bool existe(string& a, vector<string>& v){
