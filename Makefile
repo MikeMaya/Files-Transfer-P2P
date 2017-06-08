@@ -1,5 +1,5 @@
 cliente: cliente.cpp SocketDatagrama.o
-	g++ cliente.cpp SocketDatagrama.o PaqueteDatagrama.o -pthread -o cliente
+	g++ cliente.cpp SocketDatagrama.o PaqueteDatagrama.o -pthread -o cliente -std=c++11
 
 SocketDatagrama.o: SocketDatagrama.cpp PaqueteDatagrama.o
 	g++ SocketDatagrama.cpp -c
