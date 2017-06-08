@@ -75,6 +75,7 @@ vector<string> arranque(){
     while((d = readdir(dir))!= NULL){
         if( d->d_type == DT_REG){
             nuevo = string(d->d_name);
+            cout<<"Encontrado "<<nuevo<<'\n';
             archivos.push_back(nuevo);
         }
     }
@@ -98,6 +99,7 @@ void verificarCambios(vector<string>&archivos ){
         if( d->d_type == DT_REG){
             nuevo = string(d->d_name);
             if(!existe(nuevo, archivos)){
+                cout<<"Archivo nuevo "<<nuevo<<'\n';
                 archivos.push_back(nuevo);
                 Archivos.emplace(nuevo, vector<string>());
             }
@@ -114,6 +116,7 @@ void anunciarPropios(vector<string>& archivos, SocketDatagrama& socket){
     for(string arch: archivos){
         strcpy(pet.nombre, arch.c_str());
         PaqueteDatagrama p((char *)&pet, sizeof(Peticion),(char*) direccionBroadcast.c_str(), puertoEscucha); 
+        cout<<"Anunciando "<<pet.nombre<<'\n';
         socket.envia(p);
     }
     return;
@@ -184,7 +187,8 @@ void pedirFaltantes(SocketDatagrama& socket){
             }
             i= (i+1)%noIPS;
         }
-    }    
+    }
+    cout<<"Terminando pendientes\n";
     return;
 }
 
