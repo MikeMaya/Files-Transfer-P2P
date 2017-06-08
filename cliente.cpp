@@ -17,7 +17,7 @@ vector<string> IPS;
 //Parametros globales
 string directorio="/home/Carpeta/";
 string basura="/home/Basura/";
-string direccionBroadcast="192.168.0.255";
+string direccionBroadcast="10.0.0.255";
 int puertoServicios=7744;
 int puertoEliminar=7745;
 int puertoEscucha=7746;
@@ -48,6 +48,10 @@ void* manejoDirectorios(void*);
 
 int main(){
 	
+    if(socketServicio.setBroadcast() < 0){
+        return 0;
+    }
+
 	pthread_t th[5];
 
     pthread_create(&th[0], NULL, detectarServicios, NULL); 
