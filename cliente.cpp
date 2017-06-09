@@ -175,7 +175,8 @@ void* broadcast(void*){
         //cout<<"Enviando mi direccion\n";
         PaqueteDatagrama  p((char *)num, 2*sizeof(int), (char*) direccionBroadcast.c_str(), puertoServicios); 
         socketServicio.envia(p);
-        sleep(10);
+        sleep(3);
+        IPS.clear();
     }
 }
 
@@ -272,7 +273,7 @@ void pedirFaltantes(SocketDatagrama& socket){
     uint32_t offset=0;
     bool ban=true;
 
-    socket.setTimeout(0,500000);
+    socket.setTimeout(5,0);
     int noIPS= direcciones.size();
 
     while(!Pendientes.empty()){
@@ -282,26 +283,26 @@ void pedirFaltantes(SocketDatagrama& socket){
         ban=true;
         offset=0;
         i=0;
+        strcpy(pet.nombre, actual.c_str());
         direcciones= Archivos[actual];
         noIPS=direcciones.size();
         cout<<"Pidiendo "<<actual<<endl;
         //Creamos el archivo
         ofstream archivo;
         archivo.open (directorio+actual, ios::out | ios::binary);
-
+        cout<<directorio+actual<<endl;
         while(ban){
 
             pet.offset=offset;
             dir= siguienteValido(direcciones, i, noIPS);
-            cout<<offset<<endl;
             //No exite direccion Conectada que tenga ese archivo
             if(dir.empty()){
                 cout<<"NO ES POSIBLE ENCONTRAR DIRECCION PARA: "<<actual<<"\n";
                 //Esto deberia de mostrarse una excepcion o asi... no se me ha ocurrido nada
-                //Pendientes.push(actual);
+                Pendientes.push(actual);
                 break; 
             }
-
+            cout<<offset<<" - "<<dir<<endl;
             PaqueteDatagrama p((char *)&pet, sizeof(Peticion),(char*) dir.c_str(), puertoEscucha); 
             PaqueteDatagrama p2(sizeof(Respuesta));
             
@@ -309,6 +310,7 @@ void pedirFaltantes(SocketDatagrama& socket){
             e=socket.recibeTimeout(p2);
             
             if(e>=0){
+                cout<<"Respuesta recibida"<<endl;
                 memcpy(&res, p2.obtieneDatos(),sizeof(Respuesta));    
                 offset+=res.count;                
                 archivo.write(res.data, res.count);
@@ -332,5 +334,6 @@ void* manejoDirectorios(void* args){
         anunciarPropios(archivos, s);
         pedirFaltantes(s);
         verificarCambios(archivos);
+        sleep(2);
     }
 }
