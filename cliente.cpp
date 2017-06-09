@@ -337,3 +337,49 @@ void* manejoDirectorios(void* args){
         sleep(2);
     }
 }
+
+void* eliminar(void* args){
+    
+    SocketDatagrama s(puertoEliminar);
+
+    Peticion pet;   
+    PaqueteDatagrama res(sizeof(int));
+    bool ban = true;    
+    int r;
+    vector<string>ipsNow = IPS;
+    string actual, completo;
+
+    DIR *dir;
+    struct dirent *d;
+
+    pet.codigo = 3;
+    s.setTimeout(1,0);
+    //Leer de directorio
+    while(1){
+        dir= opendir(basura.c_str());
+        while((d = readdir(dir))!= NULL){
+            actual= string(d->d_name);
+            strcpy(pet.nombre, actual.c_str());
+            //Enviar a todas las IPS en el momento? 
+            for(string ip : ipsNow){
+                PaqueteDatagrama pet((char*)&pet, sizeof(Peticion), (char*) ip.c_str(), puertoEscucha);
+                s.envia(pet);    
+                r = s.recibeTimeout(res);
+                ban&=r;
+            }
+            if(ban){
+                Archivos.erase(actual);
+                completo= basura+actual;
+                if( access(completo.c_str(), F_OK) != -1 ){
+                    if( remove(completo.c_str()) == -1 ){
+                        cout << "Error al remover archivo \"" << pet.nombre << "\"" << endl;
+                    }
+                }
+            }            
+        }
+        closedir(dir);
+        sleep(3);
+    }
+}
+
+
