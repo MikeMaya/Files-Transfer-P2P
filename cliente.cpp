@@ -50,7 +50,6 @@ struct Respuesta{
 //Hilos
 void* detectarServicios(void*);
 void* broadcast(void*);
-void* eliminar(void*);
 void* escuchar(void*);
 void* manejoDirectorios(void*);
 
@@ -64,13 +63,11 @@ int main(){
 
     pthread_create(&th[0], NULL, detectarServicios, NULL); 
     pthread_create(&th[1], NULL, broadcast, NULL); 
-    pthread_create(&th[2], NULL, eliminar, NULL);
 	pthread_create(&th[3], NULL, escuchar, NULL); 
     pthread_create(&th[4], NULL, manejoDirectorios, NULL);
 
     pthread_join(th[0], NULL);
     pthread_join(th[1], NULL);
-    pthread_join(th[2], NULL);
     pthread_join(th[3], NULL);
     pthread_join(th[4], NULL);
 	
@@ -326,20 +323,7 @@ void pedirFaltantes(SocketDatagrama& socket){
     return;
 }
 
-void* manejoDirectorios(void* args){
-    SocketDatagrama s(puertoArchivos);
-    //Cargar archivos iniciales
-    vector<string> archivos= arranque();
-    while(1){
-        anunciarPropios(archivos, s);
-        pedirFaltantes(s);
-        verificarCambios(archivos);
-        sleep(2);
-    }
-}
-
-void* eliminar(void* args){
-    
+void eliminar(){
     SocketDatagrama s(puertoEliminar);
 
     Peticion pet;   
@@ -358,7 +342,7 @@ void* eliminar(void* args){
         cout<<"Verificando Basura"<<endl;
         vector<string>ipsNow = IPS;
         while((d = readdir(dir))!= NULL){
-            if( d->d_type == DT_REG){
+            if(d->d_type == DT_REG){
                 actual= string(d->d_name);
                 cout<<"Eliminando "<<actual<<endl;
                 strcpy(pet.nombre, actual.c_str());
@@ -384,8 +368,18 @@ void* eliminar(void* args){
             }            
         }
         closedir(dir);
-        sleep(3);
     }
 }
 
-
+void* manejoDirectorios(void* args){
+    SocketDatagrama s(puertoArchivos);
+    //Cargar archivos iniciales
+    vector<string> archivos= arranque();
+    while(1){
+        anunciarPropios(archivos, s);
+        pedirFaltantes(s);
+        verificarCambios(archivos);
+        eliminar();
+        sleep(2);
+    }
+}
