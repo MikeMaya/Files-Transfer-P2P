@@ -25,6 +25,7 @@ vector<string> IPS;
 string directorio="/home/Carpeta/";
 string basura="/home/Basura/";
 string direccionBroadcast="10.100.95.255";
+string eliminando="";
 int puertoServicios=7744;
 int puertoEliminar=7745;
 int puertoEscucha=7746;
@@ -103,6 +104,8 @@ void* escuchar(void*){
         cout<<"Paquete "<<paqpet.obtieneDireccion()<<" - "<<pet.codigo<<" - "<<pet.nombre<<endl;
         switch(pet.codigo){
             case 1: // Anuncio archivo
+                cout<<"trabajando en: " <<eliminando<<endl;
+                if( string(pet.nombre) == eliminando) break;
                 if( Archivos.count(pet.nombre) == 0 ){
                     cout << "Verificando el archivo \"" << pet.nombre << "\"" << endl;
                     cout << "No lo tenemos\n";
@@ -172,7 +175,7 @@ void* broadcast(void*){
         //cout<<"Enviando mi direccion\n";
         PaqueteDatagrama  p((char *)num, 2*sizeof(int), (char*) direccionBroadcast.c_str(), puertoServicios); 
         socketServicio.envia(p);
-        sleep(7);
+        sleep(2);
         IPS.clear();
     }
 }
@@ -199,7 +202,7 @@ vector<string> arranque(){
     while((d = readdir(dir))!= NULL){
         if( d->d_type == DT_REG){
             nuevo = string(d->d_name);
-            cout<<"Encontrado "<<nuevo<<'\n';
+            //cout<<"Encontrado "<<nuevo<<'\n';
             archivos.push_back(nuevo);
         }
     }
@@ -223,7 +226,7 @@ void verificarCambios(vector<string>&archivos ){
         if( d->d_type == DT_REG){
             nuevo = string(d->d_name);
             if(!existe(nuevo, archivos)){
-                cout<<"Archivo nuevo "<<nuevo<<'\n';
+                //cout<<"Archivo nuevo "<<nuevo<<'\n';
                 archivos.push_back(nuevo);
                 Archivos.emplace(nuevo, vector<string>());
             }
@@ -240,7 +243,7 @@ void anunciarPropios(vector<string>& archivos, SocketDatagrama& socket){
     for(string arch: archivos){
         strcpy(pet.nombre, arch.c_str());
         PaqueteDatagrama p((char *)&pet, sizeof(Peticion),(char*) direccionBroadcast.c_str(), puertoEscucha); 
-        cout<<"Anunciando "<<pet.nombre<<'\n';
+        //cout<<"Anunciando "<<pet.nombre<<'\n';
         socket.envia(p);
     }
     return;
@@ -250,7 +253,7 @@ string siguienteValido(vector<string>& direcciones, int& i, int& largo){
     int inc=0;  
     while(inc < largo){
         for(string ip: IPS){
-            cout<<"IP "<<ip<<" - "<<direcciones[(i+inc)%largo]<<endl;
+            //cout<<"IP "<<ip<<" - "<<direcciones[(i+inc)%largo]<<endl;
             if(ip == direcciones[(i+inc)%largo])  return ip;        
         }
         inc++;
@@ -283,18 +286,18 @@ void pedirFaltantes(SocketDatagrama& socket){
         strcpy(pet.nombre, actual.c_str());
         direcciones= Archivos[actual];
         noIPS=direcciones.size();
-        cout<<"Pidiendo "<<actual<<endl;
+        //cout<<"Pidiendo "<<actual<<endl;
         //Creamos el archivo
         ofstream archivo;
         archivo.open (directorio+actual, ios::out | ios::binary);
-        cout<<directorio+actual<<endl;
+        //cout<<directorio+actual<<endl;
         while(ban){
 
             pet.offset=offset;
             dir= siguienteValido(direcciones, i, noIPS);
             //No exite direccion Conectada que tenga ese archivo
             if(dir.empty()){
-                cout<<"NO ES POSIBLE ENCONTRAR DIRECCION PARA: "<<actual<<"\n";
+                //cout<<"NO ES POSIBLE ENCONTRAR DIRECCION PARA: "<<actual<<"\n";
                 //Esto deberia de mostrarse una excepcion o asi... no se me ha ocurrido nada
                 Pendientes.push(actual);
                 break; 
@@ -307,7 +310,7 @@ void pedirFaltantes(SocketDatagrama& socket){
             e=socket.recibeTimeout(p2);
             
             if(e>=0){
-                cout<<"Respuesta recibida"<<endl;
+                //cout<<"Respuesta recibida"<<endl;
                 memcpy(&res, p2.obtieneDatos(),sizeof(Respuesta));    
                 offset+=res.count;                
                 archivo.write(res.data, res.count);
@@ -319,7 +322,7 @@ void pedirFaltantes(SocketDatagrama& socket){
             i= (i+1)%noIPS;
         }
     }
-    cout<<"Terminando pendientes\n";
+    //cout<<"Terminando pendientes\n";
     return;
 }
 
@@ -343,6 +346,7 @@ void eliminar(vector<string>& archivos){
         while((d = readdir(dir))!= NULL){
             if(d->d_type == DT_REG){
                 actual= string(d->d_name);
+                eliminando=actual;
                 cout<<"Eliminando "<<actual<<endl;
                 strcpy(pet.nombre, actual.c_str());
                 pet.codigo = 3; 
@@ -352,6 +356,7 @@ void eliminar(vector<string>& archivos){
                     PaqueteDatagrama peticion((char*)&pet, sizeof(Peticion), (char*) ip.c_str(), puertoEscucha);
                     s.envia(peticion);
                     r = s.recibeTimeout(res);
+                    cout<<"Resultado: "<<r<<endl;
                     ban&=r;
                 }
                 if(ban){
@@ -370,6 +375,7 @@ void eliminar(vector<string>& archivos){
                         }
                     }
                 }
+                eliminando="";
             }            
         }
         closedir(dir);
@@ -385,6 +391,6 @@ void* manejoDirectorios(void* args){
         pedirFaltantes(s);
         verificarCambios(archivos);
         eliminar(archivos);
-        sleep(3);
+        sleep(4);
     }
 }
