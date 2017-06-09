@@ -323,7 +323,7 @@ void pedirFaltantes(SocketDatagrama& socket){
     return;
 }
 
-void eliminar(){
+void eliminar(vector<string>& archivos){
     SocketDatagrama s(puertoEliminar);
 
     Peticion pet;   
@@ -356,6 +356,12 @@ void eliminar(){
                 }
                 if(ban){
                     Archivos.erase(actual);
+                    vector<string>aux;
+                    for(int i=0;i<archivos.size();i++)
+                        if(actual != archivos[i])
+                            aux.push_back(archivos[i]);
+                    
+                    archivos=aux;
                     completo= basura+actual;
                     cout<<"Borrando archivo"<<endl;
                     if( access(completo.c_str(), F_OK) != -1 ){
@@ -378,7 +384,7 @@ void* manejoDirectorios(void* args){
         anunciarPropios(archivos, s);
         pedirFaltantes(s);
         verificarCambios(archivos);
-        eliminar();
+        eliminar(archivos);
         sleep(3);
     }
 }
