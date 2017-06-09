@@ -147,7 +147,7 @@ void* escuchar(void*){
                     }
                 }
                 
-                Archivos.erase(pet.nombre);
+                Archivos.erase(string(pet.nombre));
 
                 fileDescriptor = 1;
                 paqres.inicializaDatos((char *)&fileDescriptor);
@@ -335,9 +335,8 @@ void eliminar(){
     DIR *dir;
     struct dirent *d;
 
-    s.setTimeout(1,0);
+    s.setTimeout(5,0);
     //Leer de directorio
-    while(1){
         dir= opendir(basura.c_str());
         cout<<"Verificando Basura"<<endl;
         vector<string>ipsNow = IPS;
@@ -368,7 +367,7 @@ void eliminar(){
             }            
         }
         closedir(dir);
-    }
+
 }
 
 void* manejoDirectorios(void* args){
@@ -380,6 +379,6 @@ void* manejoDirectorios(void* args){
         pedirFaltantes(s);
         verificarCambios(archivos);
         eliminar();
-        sleep(2);
+        sleep(3);
     }
 }
