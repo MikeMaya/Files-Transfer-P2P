@@ -106,23 +106,24 @@ void* escuchar(void*){
 
         switch(pet.codigo){
             case 1: // Anuncio archivo
-                // cout << "Verificando el archivo \"" << pet.nombre << "\"" << endl;
                 if( Archivos.count(pet.nombre) == 0 ){
-                    // cout << "No lo tenemos\n";
+                    cout << "Verificando el archivo \"" << pet.nombre << "\"" << endl;
+                    cout << "No lo tenemos\n";
                     Pendientes.push(pet.nombre);
+                    Archivos.emplace(string(pet.nombre), vector<string>());
                 }
 
                 v = Archivos[pet.nombre];
                 if( !existe(ipRemota, v) ){
-                    // cout << "Primera vez  de la ip " << ipRemota << endl;
+                    cout << "Primera vez  de la ip " << ipRemota << endl;
                     v.push_back(ipRemota);
                     Archivos[pet.nombre] = v;
                 }
-                cout << endl;
+                //cout << endl;
                 break;
 
             case 2: // Peticion de un archivo
-                // cout << "Buscando el archivo " << filename << endl;
+                cout << "Buscando el archivo " << filename << endl;
 
                 fileDescriptor = open(filename, O_RDONLY);
                 if( fileDescriptor == -1 )
@@ -171,7 +172,7 @@ void* broadcast(void*){
     num[1]=5;
     num[0]=3;
     while(1){
-        cout<<"Enviando mi direccion\n";
+        //cout<<"Enviando mi direccion\n";
         PaqueteDatagrama  p((char *)num, 2*sizeof(int), (char*) direccionBroadcast.c_str(), puertoServicios); 
         socketServicio.envia(p);
         sleep(10);
@@ -179,11 +180,11 @@ void* broadcast(void*){
 }
 
 void* detectarServicios(void*){
-    cout<<"Esperando servicios disponibles\n";
+    //cout<<"Esperando servicios disponibles\n";
     PaqueteDatagrama p2(sizeof(int));
     while(1){   
         socketServicio.recibe(p2);
-        cout<<"Servico disponible en: "<<p2.obtieneDireccion()<<'\n';
+        //cout<<"Servico disponible en: "<<p2.obtieneDireccion()<<'\n';
         IPS.push_back(string(p2.obtieneDireccion()));
         //sleep(10);
     }   
@@ -241,17 +242,19 @@ void anunciarPropios(vector<string>& archivos, SocketDatagrama& socket){
     for(string arch: archivos){
         strcpy(pet.nombre, arch.c_str());
         PaqueteDatagrama p((char *)&pet, sizeof(Peticion),(char*) direccionBroadcast.c_str(), puertoEscucha); 
-        cout<<"Anunciando "<<pet.nombre<<'\n';
+        //cout<<"Anunciando "<<pet.nombre<<'\n';
         socket.envia(p);
     }
     return;
 }
 
 string siguienteValido(vector<string>& direcciones, int& i, int& largo){
-    int inc=0;
+    int inc=0;  
     while(inc < largo){
-        for(string ip: IPS)
+        for(string ip: IPS){
+            cout<<"IP "<<ip<<" - "<<direcciones[(i+inc)%largo]<<endl;
             if(ip == direcciones[(i+inc)%largo])  return ip;        
+        }
         inc++;
     }
     return "";
@@ -279,6 +282,9 @@ void pedirFaltantes(SocketDatagrama& socket){
         ban=true;
         offset=0;
         i=0;
+        direcciones= Archivos[actual];
+        noIPS=direcciones.size();
+        cout<<"Pidiendo "<<actual<<endl;
         //Creamos el archivo
         ofstream archivo;
         archivo.open (directorio+actual, ios::out | ios::binary);
@@ -287,6 +293,7 @@ void pedirFaltantes(SocketDatagrama& socket){
 
             pet.offset=offset;
             dir= siguienteValido(direcciones, i, noIPS);
+            cout<<offset<<endl;
             //No exite direccion Conectada que tenga ese archivo
             if(dir.empty()){
                 cout<<"NO ES POSIBLE ENCONTRAR DIRECCION PARA: "<<actual<<"\n";
@@ -313,7 +320,7 @@ void pedirFaltantes(SocketDatagrama& socket){
             i= (i+1)%noIPS;
         }
     }
-    cout<<"Terminando pendientes\n";
+    //cout<<"Terminando pendientes\n";
     return;
 }
 
