@@ -7,7 +7,8 @@
 #include <fcntl.h>
 #include <pthread.h>
 #include <unistd.h>
-#define BUF_SIZE 1024
+#define BUF_SIZE 5024
+#define NAME_SIZE 1024
 using namespace std;
 
 //Estructuras Globales
@@ -24,7 +25,7 @@ vector<string> IPS;
 //Parametros globales
 string directorio="/home/Carpeta/";
 string basura="/home/Basura/";
-string direccionBroadcast="10.100.95.255";
+string direccionBroadcast="192.168.43.255";
 string eliminando="";
 int puertoServicios=7744;
 int puertoEliminar=7745;
@@ -39,7 +40,7 @@ SocketDatagrama socketServicio(puertoServicios);
 //Estructura usada para realizar una peticion
 struct Peticion{
     int codigo;
-    char nombre[BUF_SIZE];
+    char nombre[NAME_SIZE];
     uint32_t offset;
 };
 //Estructura usada para realizar la respuesta de archivos
@@ -344,7 +345,7 @@ void eliminar(){
     DIR *dir;
     struct dirent *d;
 
-    s.setTimeout(5,0);
+    s.setTimeout(1,0);
     //Leer de directorio
     dir= opendir(basura.c_str());
     cout<<"Verificando Basura"<<endl;
@@ -396,6 +397,6 @@ void* manejoDirectorios(void* args){
         pedirFaltantes(s);
         //verificarCambios(archivos);
         eliminar();
-        sleep(4);
+        sleep(1);
     }
 }
