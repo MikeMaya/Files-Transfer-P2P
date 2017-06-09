@@ -30,6 +30,7 @@ int puertoServicios=7744;
 int puertoEliminar=7745;
 int puertoEscucha=7746;
 int puertoArchivos=7747;
+int noFallos=7;
 
 //Sockets compartidos
 SocketDatagrama socketServicio(puertoServicios);
@@ -167,6 +168,7 @@ void* escuchar(void*){
     }
 }
 
+
 void* broadcast(void*){
     int num[2];
     num[1]=5;
@@ -175,8 +177,8 @@ void* broadcast(void*){
         //cout<<"Enviando mi direccion\n";
         PaqueteDatagrama  p((char *)num, 2*sizeof(int), (char*) direccionBroadcast.c_str(), puertoServicios); 
         socketServicio.envia(p);
-        sleep(2);
-        IPS.clear();
+        sleep(5);
+        //IPS.clear();
     }
 }
 
@@ -186,7 +188,9 @@ void* detectarServicios(void*){
     while(1){   
         socketServicio.recibe(p2);
         //cout<<"Servico disponible en: "<<p2.obtieneDireccion()<<'\n';
-        IPS.push_back(string(p2.obtieneDireccion()));
+        string a(p2.obtieneDireccion());
+        if(!existe(a, IPS))
+            IPS.push_back(string(p2.obtieneDireccion()));
         //sleep(10);
     }   
 }
@@ -215,38 +219,29 @@ vector<string> arranque(){
     return archivos;
 }
 
-void verificarCambios(vector<string>&archivos ){
+void anunciarPropios(SocketDatagrama& socket){
     string nuevo;
     DIR *dir;
     struct dirent *d;
     FILE *file;
+    Peticion pet;
+    pet.codigo=1;
+    if(socket.setBroadcast() < 0) return;
     //Leer de directorio
     dir= opendir(directorio.c_str());
     while((d = readdir(dir))!= NULL){
         if( d->d_type == DT_REG){
             nuevo = string(d->d_name);
-            if(!existe(nuevo, archivos)){
+            if(Archivos.count(nuevo)==0){
                 //cout<<"Archivo nuevo "<<nuevo<<'\n';
-                archivos.push_back(nuevo);
                 Archivos.emplace(nuevo, vector<string>());
             }
+            strcpy(pet.nombre, nuevo.c_str());
+            PaqueteDatagrama p((char *)&pet, sizeof(Peticion),(char*) direccionBroadcast.c_str(), puertoEscucha); 
+            socket.envia(p);            
         }
     }
     closedir(dir);
-    //Meter en la tabla
-}
-
-void anunciarPropios(vector<string>& archivos, SocketDatagrama& socket){
-    Peticion pet;
-    pet.codigo=1;
-    if(socket.setBroadcast() < 0) return;
-    for(string arch: archivos){
-        strcpy(pet.nombre, arch.c_str());
-        PaqueteDatagrama p((char *)&pet, sizeof(Peticion),(char*) direccionBroadcast.c_str(), puertoEscucha); 
-        //cout<<"Anunciando "<<pet.nombre<<'\n';
-        socket.envia(p);
-    }
-    return;
 }
 
 string siguienteValido(vector<string>& direcciones, int& i, int& largo){
@@ -259,6 +254,16 @@ string siguienteValido(vector<string>& direcciones, int& i, int& largo){
         inc++;
     }
     return "";
+}
+
+void desconectar(string ip){
+    for(int i=0;i<IPS.size();i++){
+        if(ip==IPS[i]){
+            IPS.erase(IPS.begin()+i);
+            break;
+        }
+    }
+    return;
 }
 
 void pedirFaltantes(SocketDatagrama& socket){
@@ -326,12 +331,13 @@ void pedirFaltantes(SocketDatagrama& socket){
     return;
 }
 
-void eliminar(vector<string>& archivos){
+void eliminar(){
     SocketDatagrama s(puertoEliminar);
 
     Peticion pet;   
     PaqueteDatagrama res(sizeof(int));
     bool ban = true;    
+    bool fallo = true;
     int r;
     string actual, completo;
 
@@ -340,57 +346,56 @@ void eliminar(vector<string>& archivos){
 
     s.setTimeout(5,0);
     //Leer de directorio
-        dir= opendir(basura.c_str());
-        cout<<"Verificando Basura"<<endl;
-        vector<string>ipsNow = IPS;
-        while((d = readdir(dir))!= NULL){
-            if(d->d_type == DT_REG){
-                actual= string(d->d_name);
-                eliminando=actual;
-                cout<<"Eliminando "<<actual<<endl;
-                strcpy(pet.nombre, actual.c_str());
-                pet.codigo = 3; 
-                //Enviar a todas las IPS en el momento? 
-                for(string ip : ipsNow){
-                    cout<<"Enviando a "<<ip<<endl;
-                    PaqueteDatagrama peticion((char*)&pet, sizeof(Peticion), (char*) ip.c_str(), puertoEscucha);
+    dir= opendir(basura.c_str());
+    cout<<"Verificando Basura"<<endl;
+    vector<string>ipsNow = IPS;
+    while((d = readdir(dir))!= NULL){
+        if(d->d_type == DT_REG){
+            actual= string(d->d_name);
+            eliminando=actual;
+            cout<<"Eliminando "<<actual<<endl;
+            strcpy(pet.nombre, actual.c_str());
+            pet.codigo = 3; 
+            fallo=true;
+            //Enviar a todas las IPS en el momento? 
+            for(string ip : ipsNow){
+                cout<<"Enviando a "<<ip<<endl;
+                PaqueteDatagrama peticion((char*)&pet, sizeof(Peticion), (char*) ip.c_str(), puertoEscucha);
+                for(int i=0; i<noFallos;i++){
                     s.envia(peticion);
-                    r = s.recibeTimeout(res);
-                    cout<<"Resultado: "<<r<<endl;
-                    ban&=r;
-                }
-                if(ban){
-                    Archivos.erase(actual);
-                    vector<string>aux;
-                    for(int i=0;i<archivos.size();i++)
-                        if(actual != archivos[i])
-                            aux.push_back(archivos[i]);
-                    
-                    archivos=aux;
-                    completo= basura+actual;
-                    cout<<"Borrando archivo"<<endl;
-                    if( access(completo.c_str(), F_OK) != -1 ){
-                        if( remove(completo.c_str()) == -1 ){
-                            cout << "Error al remover archivo \"" << pet.nombre << "\"" << endl;
-                        }
+                    r = s.recibeTimeout(res);    
+                    if(r > 0){
+                        fallo=false;
+                        break;
                     }
                 }
-                eliminando="";
-            }            
+                if(fallo == true){
+                    desconectar(ip);
+                }
+            }
+            Archivos.erase(actual);
+            completo= basura+actual;
+            cout<<"Borrando archivo"<<endl;
+            if( access(completo.c_str(), F_OK) != -1 ){
+                if( remove(completo.c_str()) == -1 ){
+                    cout << "Error al remover archivo \"" << pet.nombre << "\"" << endl;
+                }
+            }
         }
-        closedir(dir);
-
+        eliminando="";
+    }            
+    closedir(dir);
 }
 
 void* manejoDirectorios(void* args){
     SocketDatagrama s(puertoArchivos);
     //Cargar archivos iniciales
-    vector<string> archivos= arranque();
+    //vector<string> archivos= arranque();
     while(1){
-        anunciarPropios(archivos, s);
+        anunciarPropios(s);
         pedirFaltantes(s);
-        verificarCambios(archivos);
-        eliminar(archivos);
+        //verificarCambios(archivos);
+        eliminar();
         sleep(4);
     }
 }
