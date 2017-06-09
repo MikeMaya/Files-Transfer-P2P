@@ -4,6 +4,7 @@
 #include <bits/stdc++.h>
 #include <unordered_map>
 #include <dirent.h>
+#include <fcntl.h>
 #include <pthread.h>
 #include <unistd.h>
 #define BUF_SIZE 1024
@@ -13,6 +14,12 @@ using namespace std;
 unordered_map<string, vector<string> > Archivos;
 queue<string> Pendientes;
 vector<string> IPS;
+
+/*Códigos de error */
+#define OK              0
+#define E_BAD_OPCODE    -1
+#define E_BAD_PARAM     -2
+#define E_IO            -3
 
 //Parametros globales
 string directorio="/home/Carpeta/";
@@ -37,6 +44,7 @@ struct Peticion{
 struct Respuesta{
     char data[BUF_SIZE]; 
     uint32_t count;
+    uint32_t result;
 };
 
 //Hilos
@@ -57,16 +65,105 @@ int main(){
     pthread_create(&th[0], NULL, detectarServicios, NULL); 
     pthread_create(&th[1], NULL, broadcast, NULL); 
     //pthread_create(&th[2], NULL, eliminar, NULL);
-	//pthread_create(&th[3], NULL, escuchar, NULL); 
+	pthread_create(&th[3], NULL, escuchar, NULL); 
     pthread_create(&th[4], NULL, manejoDirectorios, NULL);
 
     pthread_join(th[0], NULL);
     pthread_join(th[1], NULL);
     //pthread_join(th[2], NULL);
-    //pthread_join(th[3], NULL);
+    pthread_join(th[3], NULL);
     pthread_join(th[4], NULL);
 	
 	return 0;
+}
+
+bool existe(string& a, vector<string>& v){
+    for(string b: v)
+        if(a==b) return true;
+    return false;
+}
+
+void* escuchar(void*){
+    SocketDatagrama s(puertoEscucha);
+    Peticion pet;
+    Respuesta res;
+    vector<string> v;
+    int fileDescriptor;
+    char *filename;
+
+    while(1){
+        PaqueteDatagrama paqpet(sizeof(Peticion));
+        PaqueteDatagrama paqres(sizeof(Respuesta));
+        bzero((char *)&pet, sizeof(Peticion));
+        bzero((char *)&res, sizeof(Respuesta));
+
+        s.recibe(paqpet);
+        memcpy((char *)&pet, paqpet.obtieneDatos(), sizeof(Peticion));
+        string ipRemota(paqpet.obtieneDireccion());
+        filename = new char[directorio.size() + strlen(pet.nombre) + 1];
+        strcpy(filename, directorio.c_str());
+        strcat(filename, pet.nombre);
+
+        switch(pet.codigo){
+            case 1: // Anuncio archivo
+                // cout << "Verificando el archivo \"" << pet.nombre << "\"" << endl;
+                if( Archivos.count(pet.nombre) == 0 ){
+                    // cout << "No lo tenemos\n";
+                    Pendientes.push(pet.nombre);
+                }
+
+                v = Archivos[pet.nombre];
+                if( !existe(ipRemota, v) ){
+                    // cout << "Primera vez  de la ip " << ipRemota << endl;
+                    v.push_back(ipRemota);
+                    Archivos[pet.nombre] = v;
+                }
+                cout << endl;
+                break;
+
+            case 2: // Peticion de un archivo
+                // cout << "Buscando el archivo " << filename << endl;
+
+                fileDescriptor = open(filename, O_RDONLY);
+                if( fileDescriptor == -1 )
+                    res.result = E_IO;
+                else{
+                    lseek(fileDescriptor, pet.offset, SEEK_SET);
+                    res.count = read(fileDescriptor, res.data, BUF_SIZE);
+                    res.result = OK;
+                    close(fileDescriptor);
+                }
+                paqres.inicializaDatos((char *)&res);
+                paqres.inicializaIp(paqpet.obtieneDireccion());
+                paqres.inicializaPuerto(paqpet.obtienePuerto());
+                s.envia(paqres);
+                break;
+
+            case 3: // Eliminar archivo
+                // cout << "Eliminando el archivo " << filename << endl;
+
+                if( access(filename, F_OK) != -1 ){
+                    if( remove(filename) == -1 ){
+                        cout << "Error removiendo el archivo \"" << pet.nombre << "\"" << endl;
+                        break;
+                    }
+                }
+                
+                Archivos.erase(pet.nombre);
+
+                fileDescriptor = 1;
+                paqres.inicializaDatos((char *)&fileDescriptor);
+                paqres.inicializaIp(paqpet.obtieneDireccion());
+                paqres.inicializaPuerto(paqpet.obtienePuerto());
+                s.envia(paqres);
+                break;
+
+            default:
+                cout << "Codigo no reconocido: " << pet.codigo << endl;
+                cout << "   Direccion: " << paqpet.obtieneDireccion();
+                cout << " : " << paqpet.obtienePuerto() << endl;
+        }
+    }
 }
 
 void* broadcast(void*){
@@ -90,12 +187,6 @@ void* detectarServicios(void*){
         IPS.push_back(string(p2.obtieneDireccion()));
         //sleep(10);
     }   
-}
-
-bool existe(string& a, vector<string>& v){
-    for(string b: v)
-        if(a==b) return true;
-    return false;
 }
 
 vector<string> arranque(){
