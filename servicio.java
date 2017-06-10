@@ -3,6 +3,9 @@ import java.net.*;
 import java.lang.Math;
 import java.nio.ByteBuffer;
 import java.nio.ByteOrder;
+import java.nio.file.Path;
+import java.nio.file.Paths;
+import java.nio.file.Files;
 import java.util.Hashtable;
 import java.util.Queue;
 import java.util.Vector;
@@ -114,7 +117,7 @@ class servicio extends Thread{
 
 	public void escuchar(){
         try(DatagramSocket s = new DatagramSocket(puertoEscucha)){
-            Peticion pet = new Peticion();
+            Peticion pet = new Peticion(1);
             Respuesta res = new Respuesta();
 
             byte[] bufferPet = new byte[Peticion.NAME_SIZE + 2*(Integer.SIZE/Byte.SIZE)];
@@ -204,7 +207,7 @@ class servicio extends Thread{
 		try{
 			socket.setBroadcast(true);
 			File dir = new File(directorio);
-			String[] listado = dir.listFiles();
+			String[] listado = dir.list();
 			for (int i=0; i<listado.length; i++){
 				if(Archivos.get(listado[i]) == null){
 					Archivos.put(listado[i], new Vector());
@@ -265,31 +268,40 @@ class servicio extends Thread{
 						break;
 					}
 					b= pet.getByteRepr();
-					DatagramPacket p(b,b.length,InetAddress.getByName(dir) ,puertoEscucha);
-					DatagramPacket p2= new DatagramPacket(buff, buff.length);
 					try {
+						DatagramPacket p =new DatagramPacket(b,b.length,InetAddress.getByName(dir) ,puertoEscucha);
+						DatagramPacket p2= new DatagramPacket(buff, buff.length);
 						socket.send(p);
 						socket.receive(p2);
 						res = new Respuesta();
 						res.getClassFromBytes(p2.getData());
 						offset= res.getCount();
 						fop.write(res.getData());
-						if(res.getCount() < BUF_SIZE){
+						if(res.getCount() < res.BUF_SIZE){
 							fop.close();
 							ban=false;
 						}
-					} catch(){
-
+					} catch (SocketTimeoutException ste){
+       					ste.printStackTrace();	
+       				} 
+					catch(UnknownHostException uhe){
+						uhe.printStackTrace();
+					} catch(IOException ioe){
+						ioe.printStackTrace();
 					}
 					i= (i+1)%noIPS;
 				}
+			} catch(FileNotFoundException fnofe){
+				fnofe.printStackTrace();
+			} catch(IOException ioe){
+				ioe.printStackTrace();
 			}
 			
 		}
 	}
 
 	public void eliminar(){
-		//try{
+		try{
 			DatagramSocket s = new DatagramSocket(puertoEliminar);
         	Peticion pet = new Peticion(3);
         	byte buf [] = new byte[4];
@@ -300,40 +312,45 @@ class servicio extends Thread{
             File dir = new File(basura);
             byte [] b;
             s.setSoTimeout(1000);
-        //} catch(){
-
-        //}
-		String[] listado = dir.listFiles();
-		for (int i=0; i<listado.length; i++){
-            actual = listado[i];
-            eliminando = actual;
-            pet.setNombre(actual);
-            fallo = true;
-            for(int j = 0; j<IPSnow.size(); j++){
-            	b = pet.getByteRepr();
-                DatagramPacket petElim = 
-                new DatagramPacket(b, b.length, InetAddress.getByName(IPSnow.get(j)), puertoEliminar);
-                for(int j=0; j<noFallos; j++){
-                    s.send(petElim); //envia(peticion);
-                    //try{
-                      s.receive(paq);
-                        fallo=false;
-                        break;
-                    //} catch (){
-                    //}
-                }
-                if(fallo){
-                	desconectar(IPS-get(j));
-                }
-            }
-            Archivos.remove(actual);
-            completo= basura+actual;
-            File borrar = new File(completo);
-            if (borrar.delete())
-                System.out.println("El fichero ha sido borrado satisfactoriamente");
-            else
-                System.out.println("El fichero no puede ser borrado");
-            eliminando="";
+			String[] listado = dir.list();
+			for (int i=0; i<listado.length; i++){
+	            actual = listado[i];
+	            eliminando = actual;
+	            pet.setNombre(actual);
+	            fallo = true;
+	            for(int j = 0; j<IPSnow.size(); j++){
+	            	b = pet.getByteRepr();
+	                DatagramPacket petElim = 
+	                new DatagramPacket(b, b.length, InetAddress.getByName(IPSnow.get(j)), puertoEliminar);
+	                for(int k=0; k<noFallos; k++){                 
+	                    try{
+	                    	s.send(petElim); //envia(peticion);
+	                      	s.receive(paq);
+	                        fallo=false;
+	                        break;
+	                    } catch(SocketTimeoutException ste) {
+	                    	ste.printStackTrace();
+	                    } catch (IOException ioe){
+	                    	ioe.printStackTrace();
+	                    }
+	                }
+	                if(fallo){
+	                	desconectar((String) IPS.get(j));
+	                }
+	            }
+	            Archivos.remove(actual);
+	            completo= basura+actual;
+	            File borrar = new File(completo);
+	            if (borrar.delete())
+	                System.out.println("El fichero ha sido borrado satisfactoriamente");
+	            else
+	                System.out.println("El fichero no puede ser borrado");
+	            eliminando="";
+	        }
+        } catch(SocketException se){
+        	se.printStackTrace();
+        } catch(UnknownHostException uhe){
+        	uhe.printStackTrace();
         }
     }
            

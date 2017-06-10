@@ -9,7 +9,7 @@ class Peticion{
 	int offset;
     String nombre;
     
-	int NAME_SIZE=1024;
+	public static int NAME_SIZE=1024;
 
 	public Peticion(int i){
 		codigo=i;

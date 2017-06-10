@@ -8,7 +8,7 @@ class Respuesta{
 	byte [] data;
     int count;
     int result;
-    int BUF_SIZE=5024;
+    public static int BUF_SIZE=5024;
 
 	public Respuesta(){
 	}
@@ -52,6 +52,6 @@ class Respuesta{
 	}
 
 	public void print(){
-		System.out.println(codigo +" "+ nombre + " " + offset+"\n");
+		System.out.println(count +" "+ result+"\n");
 	}
 }

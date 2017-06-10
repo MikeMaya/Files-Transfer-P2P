@@ -13,10 +13,10 @@ class cliente{
 
 	public static void main(String args[]) throws Exception{
 		DatagramSocket socketServicio=new DatagramSocket(puertoServicios);	
-		servicio detectarServicios(1);
-		servicio broadcast(2);
-		servicio escuchar(3);
-		servicio manejoDirectorios(4);
+		servicio detectarServicios = new servicio(1);
+		servicio broadcast= new servicio(2);
+		servicio escuchar= new servicio(3);
+		servicio manejoDirectorios= new servicio(4);
 		//Seteamos el socket compartido
 		detectarServicios.setSocket(socketServicio);
 		broadcast.setSocket(socketServicio);
