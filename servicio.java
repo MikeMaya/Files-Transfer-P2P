@@ -8,7 +8,7 @@ import java.util.Queue;
 import java.util.Vector;
 import java.util.LinkedList;
 
-class cliente{
+class servicio extends Thread{
 	//Estructuras Globales
 	Hashtable<String, Vector> Archivos= new Hashtable<String, Vector>();
 	Queue<String> Pendientes = new LinkedList<String>();
@@ -34,8 +34,11 @@ class cliente{
 
 	DatagramSocket socketServicio = null;
 
-	public cliente(){
+	int tipo;
+
+	public servicio(int t){
 		try{
+			tipo=t;
 			socketServicio=new DatagramSocket(puertoServicios);	
 			direccionBroadcast = InetAddress.getByName(dirBroad);		
 		}catch(IOException ioe){
@@ -68,6 +71,32 @@ class cliente{
 	        }
 	    }
 	    return;
+	}
+
+	public void broadcast(){
+	    ByteBuffer byteBuffer = ByteBuffer.allocate(8); 
+	    byteBuffer.putInt(1);
+	    byteBuffer.putInt(5);
+	    byte [] b = byteBuffer.array();
+
+	    while(1){
+	        DatagramPacket p = new DatagramPacket(b, b.length, direccionBroadcast, puertoServicios);
+	        socketServicio.send(p);
+	        Thread.sleep(5000);
+	        //IPS.clear();
+	    }
+	}
+
+	public void detectarServicios(){
+		byte buff = new byte[4];
+		DatagramPacket p2;
+		while(true){
+			p2= new DatagramPacket(buff, buff.size());
+			socketServicio.receive(p2);
+			String a= p2.getAddress().getHostAddress();
+			if(!existe(a, IPS))
+	            IPS.add(string(p2.obtieneDireccion()));
+		}
 	}
 
 	public void anunciarPropios(DatagramSocket socket){
@@ -177,7 +206,23 @@ class cliente{
 		}
 	}
 
-	public static void main(String args[]) throws Exception{
-		
+	@Override
+	public void run(){
+		while(true){
+			switch(tipo){
+			case 1: 
+				detectarServicios();
+				break;
+			case 2:
+				broadcast();
+				break;
+			case 3:
+				escuchar();
+				break;
+			case 4:
+				manejoDirectorios();
+				break;
+			}
+		}
 	}
 }
