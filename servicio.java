@@ -112,6 +112,91 @@ class servicio extends Thread{
 		}
 	}
 
+	public void escuchar(){
+        try(DatagramSocket s = new DatagramSocket(puertoEscucha)){
+            Peticion pet = new Peticion();
+            Respuesta res = new Respuesta();
+
+            byte[] bufferPet = new byte[Peticion.NAME_SIZE + 2*(Integer.SIZE/Byte.SIZE)];
+            byte[] bufferRes = new byte[Respuesta.BUF_SIZE + 2*(Integer.SIZE/Byte.SIZE)];
+            byte[] bufferCon = new byte[1];
+            
+            while(true){
+                DatagramPacket paqpet = new DatagramPacket(bufferPet, bufferPet.length);
+                DatagramPacket paqres = new DatagramPacket(bufferRes, bufferRes.length);
+                DatagramPacket paqcon = new DatagramPacket(bufferCon, bufferCon.length);
+                
+                s.receive(paqpet);
+                pet.getClassFromBytes(paqpet.getData());
+                String ipRemota = paqpet.getAddress().getHostAddress();
+                String filename = directorio + pet.nombre;
+                System.out.println("Paquete " + ipRemota + " - " + pet.codigo + " - " + pet.nombre);
+
+                switch(pet.codigo){
+                    case 1: // Anuncio archivo
+                        System.out.println("  Trabajando en: " + eliminando);
+                        if( pet.nombre.equals(eliminando) )
+                            break;
+                        
+                        if( !Archivos.containsKey(pet.nombre) ){
+                            System.out.println("  Archivo a pendientes \"" + pet.nombre + "\"");
+                            Pendientes.add(pet.nombre);
+                            Archivos.put(pet.nombre, new Vector());
+                        }
+                        
+                        Vector<String> v = Archivos.get(pet.nombre);
+                        if( !v.contains(ipRemota) ){
+                            System.out.println("  Primera vez de la ip " + ipRemota);
+                            v.add(ipRemota);
+                            Archivos.replace(pet.nombre, v);
+                        }
+                        break;
+                        
+                    case 2: // Peticion de un archivo
+                        System.out.println("  Buscando para mandar el archivo " + filename);
+                        
+                        try(RandomAccessFile raf = new RandomAccessFile(filename, "rb")){
+                            raf.seek(pet.offset);
+                            res.setCount(raf.read(res.data, 0, Respuesta.BUF_SIZE));
+                            res.setResult(OK);
+                        } catch(FileNotFoundException e){
+                            res.setResult(E_IO);
+                        }
+                        
+                        paqres.setData(res.getByteRepr());
+                        paqres.setAddress(paqpet.getAddress());
+                        paqres.setPort(paqpet.getPort());
+                        
+                        s.send(paqres);
+                        break;
+                        
+                    case 3: // Peticion de borrar un archivo
+                        System.out.println("  Eliminando el archivo " + filename);
+                        
+                        Path path = Paths.get(filename);
+                        Files.deleteIfExists(path);
+                        
+                        Archivos.remove(pet.nombre);
+                        bufferCon[0] = 1;
+                        paqcon.setData(bufferCon);
+                        paqcon.setAddress(paqpet.getAddress());
+                        paqcon.setPort(paqpet.getPort());
+                        
+                        s.send(paqcon);
+                        break;
+                        
+                    default:
+                        System.out.println("  Codigo no reconocido: " + pet.codigo);
+                        System.out.print("    Direccion: " + paqpet.getAddress().getHostAddress());
+                        System.out.println(" : " + paqpet.getPort());
+                }
+            }
+        } catch(Exception e){
+            System.out.println("**EN FUNCION ESCUCHAR:");
+            e.printStackTrace();
+        }
+    }
+
 	public void anunciarPropios(DatagramSocket socket){
 		String nuevo;
 		Peticion pet=new Peticion(1);
@@ -188,58 +273,20 @@ class servicio extends Thread{
 						res = new Respuesta();
 						res.getClassFromBytes(p2.getData());
 						offset= res.getCount();
-
+						fop.write(res.getData());
+						if(res.getCount() < BUF_SIZE){
+							fop.close();
+							ban=false;
+						}
 					} catch(){
 
 					}
+					i= (i+1)%noIPS;
 				}
 			}
 			
 		}
 	}
-
-
-	/*
-	        //cout<<"Pidiendo "<<actual<<endl;
-	        //Creamos el archivo
-	        ofstream archivo;
-	        archivo.open (directorio+actual, ios::out | ios::binary);
-	        //cout<<directorio+actual<<endl;
-	        while(ban){
-
-	            pet.offset=offset;
-	            dir= siguienteValido(direcciones, i, noIPS);
-	            //No exite direccion Conectada que tenga ese archivo
-	            if(dir.empty()){
-	                //cout<<"NO ES POSIBLE ENCONTRAR DIRECCION PARA: "<<actual<<"\n";
-	                //Esto deberia de mostrarse una excepcion o asi... no se me ha ocurrido nada
-	                Pendientes.push(actual);
-	                break; 
-	            }
-	            cout<<offset<<" - "<<dir<<endl;
-	            PaqueteDatagrama p((char *)&pet, sizeof(Peticion),(char*) dir.c_str(), puertoEscucha); 
-	            PaqueteDatagrama p2(sizeof(Respuesta));
-	            
-	            socket.envia(p);
-	            e=socket.recibeTimeout(p2);
-	            
-	            if(e>=0){
-	                //cout<<"Respuesta recibida"<<endl;
-	                memcpy(&res, p2.obtieneDatos(),sizeof(Respuesta));    
-	                offset+=res.count;                
-	                archivo.write(res.data, res.count);
-	                if(res.count< BUF_SIZE){
-	                    archivo.close();
-	                    ban=false;
-	                }
-	            }
-	            i= (i+1)%noIPS;
-	        }
-	    }
-	    //cout<<"Terminando pendientes\n";
-	    return;
-	}
-	*/
 
 	public void eliminar(){
 		//try{
