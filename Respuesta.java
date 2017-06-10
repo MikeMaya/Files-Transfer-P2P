@@ -11,6 +11,7 @@ class Respuesta{
     public static int BUF_SIZE=5024;
 
 	public Respuesta(){
+		data= new byte[BUF_SIZE];
 	}
 
 	public byte[] getByteRepr() {
@@ -23,9 +24,9 @@ class Respuesta{
 	}
 
 	public void getClassFromBytes(byte[] buf) {
-		data= new byte[BUF_SIZE];
 		ByteBuffer bb = ByteBuffer.wrap(buf);
 		bb.order(ByteOrder.LITTLE_ENDIAN);
+		bb.position(0);
 		bb.get(data);
 		count = bb.getInt();
 		result = bb.getInt();		

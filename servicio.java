@@ -166,7 +166,7 @@ class servicio extends Thread{
                     case 2: // Peticion de un archivo
                         System.out.println("  Buscando para mandar el archivo " + filename);
                         
-                        try(RandomAccessFile raf = new RandomAccessFile(filename, "rb")){
+                        try(RandomAccessFile raf = new RandomAccessFile(filename, "r")){
                             raf.seek(pet.offset);
                             res.setCount(raf.read(res.data, 0, Respuesta.BUF_SIZE));
                             res.setResult(OK);
