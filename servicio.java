@@ -335,14 +335,15 @@ class servicio extends Thread{
 	            eliminando = actual;
 	            pet.setNombre(actual);
 	            fallo = true;
+	            System.out.println("Eliminando "+actual);
 	            for(int j = 0; j<IPSnow.size(); j++){
 	            	b = pet.getByteRepr();
-	                DatagramPacket petElim = 
-	                new DatagramPacket(b, b.length, InetAddress.getByName(IPSnow.get(j)), puertoEliminar);
+	                DatagramPacket petElim =  new DatagramPacket(b, b.length, InetAddress.getByName(IPSnow.get(j)), puertoEliminar);
 	                for(int k=0; k<noFallos; k++){                 
 	                    try{
-	                    	s.send(petElim); //envia(peticion);
+							s.send(petElim); //envia(peticion);
 	                      	s.receive(paq);
+	                      	System.out.println("Enviado a "+IPSnow.get(j));
 	                        fallo=false;
 	                        break;
 	                    } catch(SocketTimeoutException ste) {
@@ -378,7 +379,7 @@ class servicio extends Thread{
 			while(true){
 				anunciarPropios(s);
 				pedirFaltantes(s);
-				//eliminar();
+				eliminar();
 				Thread.sleep(1000);
 			}
 		}catch(SocketException se){
