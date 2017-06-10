@@ -40,8 +40,8 @@ SocketDatagrama socketServicio(puertoServicios);
 //Estructura usada para realizar una peticion
 struct Peticion{
     int codigo;
-    char nombre[NAME_SIZE];
     uint32_t offset;
+    char nombre[NAME_SIZE];
 };
 //Estructura usada para realizar la respuesta de archivos
 struct Respuesta{
@@ -94,6 +94,7 @@ void* escuchar(void*){
     while(1){
         PaqueteDatagrama paqpet(sizeof(Peticion));
         PaqueteDatagrama paqres(sizeof(Respuesta));
+        PaqueteDatagrama paqcon(sizeof(int));
         bzero((char *)&pet, sizeof(Peticion));
         bzero((char *)&res, sizeof(Respuesta));
 
@@ -155,10 +156,10 @@ void* escuchar(void*){
                 Archivos.erase(string(pet.nombre));
 
                 fileDescriptor = 1;
-                paqres.inicializaDatos((char *)&fileDescriptor);
-                paqres.inicializaIp(paqpet.obtieneDireccion());
-                paqres.inicializaPuerto(paqpet.obtienePuerto());
-                s.envia(paqres);
+                paqcon.inicializaDatos((char *)&fileDescriptor);
+                paqcon.inicializaIp(paqpet.obtieneDireccion());
+                paqcon.inicializaPuerto(paqpet.obtienePuerto());
+                s.envia(paqcon);
                 break;
 
             default:
