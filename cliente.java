@@ -9,22 +9,21 @@ import java.util.Vector;
 import java.util.LinkedList;
 
 class cliente{
-	int puertoServicios=7744;
 
 	public static void main(String args[]) throws Exception{
-		DatagramSocket socketServicio=new DatagramSocket(puertoServicios);	
+		DatagramSocket socketServicio=new DatagramSocket(7744);	
 		servicio detectarServicios = new servicio(1);
 		servicio broadcast= new servicio(2);
-		servicio escuchar= new servicio(3);
-		servicio manejoDirectorios= new servicio(4);
+		//servicio escuchar= new servicio(3);
+		//servicio manejoDirectorios= new servicio(4);
 		//Seteamos el socket compartido
 		detectarServicios.setSocket(socketServicio);
 		broadcast.setSocket(socketServicio);
 		//Iniciamos los serviocs
 		detectarServicios.start();
 		broadcast.start();
-		escuchar.start();
-		manejoDirectorios.start();
+		//escuchar.start();
+		//manejoDirectorios.start();
 		
 	}
 }
