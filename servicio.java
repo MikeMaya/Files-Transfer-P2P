@@ -48,18 +48,18 @@ class servicio extends Thread{
 	public void setSocket(DatagramSocket s){
 		socketServicio=s;
 	}
-	
+
 	public boolean existe(String a, Vector v){
-		for(string b: v)
-        	if(a.equals(b)) return true;
+		for(int i=0;i<v.size();i++)
+        	if(a.equals(v.get(i))) return true;
     	return false;
 	}
 
 	public String siguienteValido(Vector direcciones, int i, int largo){
 		int inc=0;
 		while(inc < largo){
-			for(String ip: IPS){
-				if(ip.equals(direcciones[(i+inc)%largo])) return ip;
+			for(int j=0;j<IPS.size();j++){
+				if(IPS.get(j).equals(direcciones.get((i+inc)%largo))) return (String) IPS.get(j);
 			}
 			inc++;
 		}
@@ -68,7 +68,7 @@ class servicio extends Thread{
 
 	public void desconectar(String ip){
 		for(int i=0;i<IPS.size();i++){
-	        if(ip==IPS[i]){
+	        if(ip.equals(IPS.get(i))){
 	            IPS.remove(i);
 	            break;
 	        }
@@ -82,58 +82,76 @@ class servicio extends Thread{
 	    byteBuffer.putInt(5);
 	    byte [] b = byteBuffer.array();
 
-	    while(1){
+	    while(true){
 	        DatagramPacket p = new DatagramPacket(b, b.length, direccionBroadcast, puertoServicios);
-	        socketServicio.send(p);
-	        Thread.sleep(5000);
-	        //IPS.clear();
+	        try{
+	        	socketServicio.send(p);
+		        Thread.sleep(5000);
+	        }catch(IOException ioe){
+	        	ioe.printStackTrace();
+	        }catch(InterruptedException ie){
+	        	ie.printStackTrace();
+	        }
+	        
 	    }
 	}
 
 	public void detectarServicios(){
-		byte buff = new byte[4];
+		byte [] buff = new byte[4];
 		DatagramPacket p2;
 		while(true){
-			p2= new DatagramPacket(buff, buff.size());
-			socketServicio.receive(p2);
+			p2= new DatagramPacket(buff, buff.length);
+			try{
+				socketServicio.receive(p2);
+			} catch(IOException ioe){
+				ioe.printStackTrace();
+			}
 			String a= p2.getAddress().getHostAddress();
 			if(!existe(a, IPS))
-	            IPS.add(string(p2.obtieneDireccion()));
+	            IPS.add(a);
 		}
 	}
 
 	public void anunciarPropios(DatagramSocket socket){
 		String nuevo;
-		Peticion pet;
+		Peticion pet=new Peticion(1);
 		byte [] b;
-		pet.setCodigo(1);
-		socket.setBroadcast(true);
-		File dir = new File(directorio);
-		String[] listado = dir.list();
-		for (int i=0; i<listado.length; i++){
-			if(Archivos.get(listado[i]) == null){
-				Archivos.put(listado[i], new Vector());
+		try{
+			socket.setBroadcast(true);
+			File dir = new File(directorio);
+			String[] listado = dir.list();
+			for (int i=0; i<listado.length; i++){
+				if(Archivos.get(listado[i]) == null){
+					Archivos.put(listado[i], new Vector());
+				}
+				pet.setNombre(listado[i]);
+				b=pet.getByteRepr();
+				DatagramPacket p = new DatagramPacket(b, b.length, direccionBroadcast, puertoEscucha);
+				socket.send(p);
 			}
-			pet.setNombre(listado[i]);
-			b=pet.getByteRepr();
-			DatagramPacket p = new DatagramPacket(b, b.length, direccionBroadcast, puertoEscucha);
-			socket.send(p);
+		}catch(SocketException se){
+			se.printStackTrace();
+		}catch(IOException ioe){
+			ioe.printStackTrace();
 		}
 	}
 
 	public void pedirFaltantes(DatagramSocket socket){
 		String actual;
-		Peticion pet;
+		Peticion pet = new Peticion(2);
 		Respuesta res;
 		Vector direcciones;
 		String dir;
 
-		pet.setCodigo(2);
 		int i=0, e, offset;
 		boolean ban=true;
+		try {
+			socket.setSoTimeout(5000);
+		} catch(SocketException se){
+			se.printStackTrace();
+		}
 
-		socket.setSoTimeout(5000);
-		int noIPS =  direcciones.size();
+		int noIPS = 0;
 
 		while(Pendientes.peek() != null){
 			actual = Pendientes.remove();
@@ -200,12 +218,18 @@ class servicio extends Thread{
 	*/
 
 	public void manejoDirectorios(){
-		DatagramSocket s(puertoArchivos);
-		while(true){
-			anunciarPropios(s);
-			pedirFaltantes(s);
-			//eliminar();
-			Thread.sleep(1000);
+		try{
+			DatagramSocket s= new DatagramSocket(puertoArchivos);
+			while(true){
+				anunciarPropios(s);
+				pedirFaltantes(s);
+				//eliminar();
+				Thread.sleep(1000);
+			}
+		}catch(SocketException se){
+			se.printStackTrace();
+		}catch(InterruptedException ie){
+			ie.printStackTrace();
 		}
 	}
 

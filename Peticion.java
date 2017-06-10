@@ -11,14 +11,15 @@ class Peticion{
     
 	int NAME_SIZE=1024;
 
-	public Peticion(){
+	public Peticion(int i){
+		codigo=i;
 	}
 
 	public byte[] getByteRepr() {
 		ByteBuffer bb = ByteBuffer.allocate(NAME_SIZE+8);
 		bb.order(ByteOrder.LITTLE_ENDIAN);
-		bb.putInt(count);
-		bb.putInt(result);
+		bb.putInt(codigo);
+		bb.putInt(offset);
 		for (int i = 0; i < this.nombre.length(); i++)
 			bb.put((byte) this.nombre.charAt(i));
 		return bb.array();
@@ -36,13 +37,13 @@ class Peticion{
 		nombre=sb.toString();
 	}
 
-	public String setNombre(String n){
+	public void setNombre(String n){
 		nombre=n;
 	}
-	public int setOffset(int o){
-		offset=n;
+	public void setOffset(int o){
+		offset=o;
 	}
-	public int setCodigo(int c){
+	public void setCodigo(int c){
 		codigo=c;
 	}
 
