@@ -6,11 +6,22 @@ import java.nio.ByteOrder;
 
 class Peticion{
 	int codigo;
+	int offset;
     String nombre;
-    int offset;
+    
 	int NAME_SIZE=1024;
 
 	public Peticion(){
+	}
+
+	public byte[] getByteRepr() {
+		ByteBuffer bb = ByteBuffer.allocate(NAME_SIZE+8);
+		bb.order(ByteOrder.LITTLE_ENDIAN);
+		bb.putInt(count);
+		bb.putInt(result);
+		for (int i = 0; i < this.nombre.length(); i++)
+			bb.put((byte) this.nombre.charAt(i));
+		return bb.array();
 	}
 
 	public void getClassFromBytes(byte[] buf) {
@@ -25,7 +36,17 @@ class Peticion{
 		nombre=sb.toString();
 	}
 
-	public String getName(){
+	public String setNombre(String n){
+		nombre=n;
+	}
+	public int setOffset(int o){
+		offset=n;
+	}
+	public int setCodigo(int c){
+		codigo=c;
+	}
+
+	public String getNombre(){
 		return nombre;
 	}
 	public int getOffset(){
