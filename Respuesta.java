@@ -5,7 +5,7 @@ import java.nio.ByteBuffer;
 import java.nio.ByteOrder;
 
 class Respuesta{
-	String data; 
+	byte [] data;
     int count;
     int result;
     int BUF_SIZE=5024;
@@ -16,10 +16,42 @@ class Respuesta{
 	public byte[] getByteRepr() {
 		ByteBuffer bb = ByteBuffer.allocate(BUF_SIZE+8);
 		bb.order(ByteOrder.LITTLE_ENDIAN);
-		for (int i = 0; i < this.data.length(); i++)
-			bb.put((byte) this.data.charAt(i));
-		bb.putInt(BUF_SIZE,count);
-		bb.putInt(BUF_SIZE+4,result);
+		bb.put(data);
+		bb.putInt(count);
+		bb.putInt(result);
 		return bb.array();
+	}
+
+	public void getClassFromBytes(byte[] buf) {
+		data= new byte[BUF_SIZE];
+		ByteBuffer bb = ByteBuffer.wrap(buf);
+		bb.order(ByteOrder.LITTLE_ENDIAN);
+		bb.get(data);
+		count = bb.getInt();
+		result = bb.getInt();		
+	}
+
+	public void setData(byte [] n){
+		data=n;
+	}
+	public void setCount(int o){
+		count=o;
+	}
+	public void setResult(int c){
+		result=c;
+	}
+
+	public byte [] getData(){
+		return data;
+	}
+	public int getCount(){
+		return count;
+	}
+	public int getResult(){
+		return result;
+	}
+
+	public void print(){
+		System.out.println(codigo +" "+ nombre + " " + offset+"\n");
 	}
 }

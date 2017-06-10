@@ -119,7 +119,7 @@ class servicio extends Thread{
 		try{
 			socket.setBroadcast(true);
 			File dir = new File(directorio);
-			String[] listado = dir.list();
+			String[] listado = dir.listFiles();
 			for (int i=0; i<listado.length; i++){
 				if(Archivos.get(listado[i]) == null){
 					Archivos.put(listado[i], new Vector());
@@ -161,21 +161,45 @@ class servicio extends Thread{
 			pet.setNombre(actual);
 			direcciones= Archivos.get(actual);
 			noIPS= direcciones.size();
-
+			byte [] b;
+			byte [] buff = new byte[4];
 			//Aqui se tiene que crear los archivos
+			FileOutputStream fop = null;
+			File file;
+			try{
+				file = new File(directorio+actual);
+				fop = new FileOutputStream(file);
+				if (!file.exists()) {
+					file.createNewFile();
+				}
+				while(ban){
+					pet.setOffset(offset);
+					dir= siguienteValido(direcciones, i, noIPS);
+					if(dir.isEmpty()){
+						Pendientes.add(actual);
+						break;
+					}
+					b= pet.getByteRepr();
+					DatagramPacket p(b,b.length,InetAddress.getByName(dir) ,puertoEscucha);
+					DatagramPacket p2= new DatagramPacket(buff, buff.length);
+					try {
+						socket.send(p);
+						socket.receive(p2);
+						res = new Respuesta();
+						res.getClassFromBytes(p2.getData());
+						offset= res.getCount();
+
+					} catch(){
+
+					}
+				}
+			}
+			
 		}
 	}
 
 
 	/*
-	
-	        Pendientes.pop();
-	        ban=true;
-	        offset=0;
-	        i=0;
-	        strcpy(pet.nombre, actual.c_str());
-	        direcciones= Archivos[actual];
-	        noIPS=direcciones.size();
 	        //cout<<"Pidiendo "<<actual<<endl;
 	        //Creamos el archivo
 	        ofstream archivo;
@@ -216,6 +240,56 @@ class servicio extends Thread{
 	    return;
 	}
 	*/
+
+	public void eliminar(){
+		//try{
+			DatagramSocket s = new DatagramSocket(puertoEliminar);
+        	Peticion pet = new Peticion(3);
+        	byte buf [] = new byte[4];
+			Vector <String> IPSnow =IPS;
+            DatagramPacket paq = new DatagramPacket(buf, buf.length);
+ 			boolean fallo = true;
+            String actual, completo;
+            File dir = new File(basura);
+            byte [] b;
+            s.setSoTimeout(1000);
+        //} catch(){
+
+        //}
+		String[] listado = dir.listFiles();
+		for (int i=0; i<listado.length; i++){
+            actual = listado[i];
+            eliminando = actual;
+            pet.setNombre(actual);
+            fallo = true;
+            for(int j = 0; j<IPSnow.size(); j++){
+            	b = pet.getByteRepr();
+                DatagramPacket petElim = 
+                new DatagramPacket(b, b.length, InetAddress.getByName(IPSnow.get(j)), puertoEliminar);
+                for(int j=0; j<noFallos; j++){
+                    s.send(petElim); //envia(peticion);
+                    //try{
+                      s.receive(paq);
+                        fallo=false;
+                        break;
+                    //} catch (){
+                    //}
+                }
+                if(fallo){
+                	desconectar(IPS-get(j));
+                }
+            }
+            Archivos.remove(actual);
+            completo= basura+actual;
+            File borrar = new File(completo);
+            if (borrar.delete())
+                System.out.println("El fichero ha sido borrado satisfactoriamente");
+            else
+                System.out.println("El fichero no puede ser borrado");
+            eliminando="";
+        }
+    }
+           
 
 	public void manejoDirectorios(){
 		try{
