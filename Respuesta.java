@@ -20,6 +20,7 @@ class Respuesta{
 		bb.put(data, 0, BUF_SIZE);
 		bb.putInt(BUF_SIZE, count);
 		bb.putInt(BUF_SIZE+4, result);
+		System.out.println("Tamano "+bb.array().length);
 		return bb.array();
 	}
 

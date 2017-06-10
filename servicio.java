@@ -237,7 +237,7 @@ class servicio extends Thread{
 	public void pedirFaltantes(DatagramSocket socket){
 		String actual;
 		Peticion pet = new Peticion(2);
-		Respuesta res;
+		Respuesta res = new Respuesta();
 		Vector direcciones;
 		String dir;
 
@@ -260,7 +260,7 @@ class servicio extends Thread{
 			direcciones= Archivos.get(actual);
 			noIPS= direcciones.size();
 			byte [] b;
-			byte [] buff = new byte[4];
+			byte [] buff;
 			//Aqui se tiene que crear los archivos
 			FileOutputStream fop = null;
 			File file;
@@ -282,6 +282,7 @@ class servicio extends Thread{
 					}
 					b= pet.getByteRepr();
 					try {
+						buff = new byte[res.BUF_SIZE+8];
 						DatagramPacket p =new DatagramPacket(b,b.length,InetAddress.getByName(dir) ,puertoEscucha);
 						DatagramPacket p2= new DatagramPacket(buff, buff.length);
 						socket.send(p);
