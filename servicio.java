@@ -39,13 +39,16 @@ class servicio extends Thread{
 	public servicio(int t){
 		try{
 			tipo=t;
-			socketServicio=new DatagramSocket(puertoServicios);	
 			direccionBroadcast = InetAddress.getByName(dirBroad);		
 		}catch(IOException ioe){
 			System.out.println("ERRROR EN CREAR EL SOCKET");
 		}
 	}
 
+	public void setSocket(DatagramSocket s){
+		socketServicio=s;
+	}
+	
 	public boolean existe(String a, Vector v){
 		for(string b: v)
         	if(a.equals(b)) return true;
@@ -217,7 +220,7 @@ class servicio extends Thread{
 				broadcast();
 				break;
 			case 3:
-				escuchar();
+				//escuchar();
 				break;
 			case 4:
 				manejoDirectorios();
