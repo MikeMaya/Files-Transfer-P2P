@@ -13,9 +13,9 @@ import java.util.LinkedList;
 
 class servicio extends Thread{
 	//Estructuras Globales
-	Hashtable<String, Vector> Archivos= new Hashtable<String, Vector>();
-	Queue<String> Pendientes = new LinkedList<String>();
-	Vector IPS = new Vector();
+	Hashtable<String, Vector> Archivos= null;
+	Queue<String> Pendientes = null;
+	Vector IPS = null;
 
 	/*Códigos de error */
 	private static final int OK            =  0;
@@ -46,6 +46,12 @@ class servicio extends Thread{
 		}catch(IOException ioe){
 			System.out.println("ERRROR EN CREAR EL SOCKET");
 		}
+	}
+
+	public void setEstructuras(Hashtable<String, Vector> a, Queue<String>  p, Vector i){
+		Archivos= a;
+		Pendientes = p;
+		IPS = i;
 	}
 
 	public void setSocket(DatagramSocket s){
@@ -143,13 +149,13 @@ class servicio extends Thread{
                         if( pet.nombre.equals(eliminando) )
                             break;
                         
-                        if( !Archivos.containsKey(pet.nombre) ){
+                        if( !Archivos.containsKey(pet.getNombre()) ){
                             System.out.println("  Archivo a pendientes \"" + pet.nombre + "\"");
-                            Pendientes.add(pet.nombre);
+                            Pendientes.add(pet.getNombre());
                             Archivos.put(pet.nombre, new Vector());
                         }
                         
-                        Vector<String> v = Archivos.get(pet.nombre);
+                        Vector<String> v = Archivos.get(pet.getNombre());
                         if( !v.contains(ipRemota) ){
                             System.out.println("  Primera vez de la ip " + ipRemota);
                             v.add(ipRemota);
@@ -211,7 +217,8 @@ class servicio extends Thread{
 			File dir = new File(directorio);
 			String[] listado = dir.list();
 			for (int i=0; i<listado.length; i++){
-				if(Archivos.get(listado[i]) == null){
+				if(!Archivos.containsKey(listado[i])){
+					System.out.println("Agreando "+listado[i]+" a la tabla");
 					Archivos.put(listado[i], new Vector());
 				}
 				pet.setNombre(listado[i]);
@@ -243,7 +250,7 @@ class servicio extends Thread{
 		}
 
 		int noIPS = 0;
-
+		System.out.println("Cola "+Pendientes.peek());
 		while(Pendientes.peek() != null){
 			actual = Pendientes.remove();
 			ban= true;
@@ -390,9 +397,11 @@ class servicio extends Thread{
 				broadcast();
 				break;
 			case 3:
-				//escuchar();
+				System.out.println("Iniciando escuchar");
+				escuchar();
 				break;
 			case 4:
+				System.out.println("Iniciando manejoDirectorios");
 				manejoDirectorios();
 				break;
 			}
