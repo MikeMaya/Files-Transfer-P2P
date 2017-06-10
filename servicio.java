@@ -23,9 +23,9 @@ class servicio extends Thread{
 	private static final int E_BAD_PARAM   =  -2;
 	private static final int E_IO          =  -3;
 
-	String directorio="/home/Carpeta/";
-	String basura="/home/Basura/";
-	String dirBroad="192.168.43.255";
+	String directorio="C:/Carpeta/";
+	String basura="C:/Basura/";
+	String dirBroad="192.168.1.255";
 	InetAddress direccionBroadcast = null;
 	String eliminando="";
 
@@ -88,6 +88,7 @@ class servicio extends Thread{
 	    while(true){
 	        DatagramPacket p = new DatagramPacket(b, b.length, direccionBroadcast, puertoServicios);
 	        try{
+	        	//System.out.println("Enviando Direccion");
 	        	socketServicio.send(p);
 		        Thread.sleep(5000);
 	        }catch(IOException ioe){
@@ -110,6 +111,7 @@ class servicio extends Thread{
 				ioe.printStackTrace();
 			}
 			String a= p2.getAddress().getHostAddress();
+			//System.out.println("Recibio direccion: "+a);
 			if(!existe(a, IPS))
 	            IPS.add(a);
 		}
@@ -215,6 +217,7 @@ class servicio extends Thread{
 				pet.setNombre(listado[i]);
 				b=pet.getByteRepr();
 				DatagramPacket p = new DatagramPacket(b, b.length, direccionBroadcast, puertoEscucha);
+				System.out.println("Anunciando "+pet.getNombre());
 				socket.send(p);
 			}
 		}catch(SocketException se){
@@ -254,6 +257,7 @@ class servicio extends Thread{
 			//Aqui se tiene que crear los archivos
 			FileOutputStream fop = null;
 			File file;
+			System.out.println("Pidiendo "+actual);
 			try{
 				file = new File(directorio+actual);
 				fop = new FileOutputStream(file);
@@ -263,7 +267,9 @@ class servicio extends Thread{
 				while(ban){
 					pet.setOffset(offset);
 					dir= siguienteValido(direcciones, i, noIPS);
+					System.out.println("Paquete "+offset+" - "+dir);
 					if(dir.isEmpty()){
+						System.out.println("Direccion no encontrada para "+actual);
 						Pendientes.add(actual);
 						break;
 					}
@@ -376,9 +382,11 @@ class servicio extends Thread{
 		while(true){
 			switch(tipo){
 			case 1: 
+				System.out.println("Iniciando detectarServicios");
 				detectarServicios();
 				break;
 			case 2:
+				System.out.println("Iniciando broadcast");
 				broadcast();
 				break;
 			case 3:
