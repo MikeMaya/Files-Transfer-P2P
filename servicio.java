@@ -289,7 +289,7 @@ class servicio extends Thread{
 						socket.receive(p2);
 						res = new Respuesta();
 						res.getClassFromBytes(p2.getData());
-						offset= res.getCount();
+						offset+= res.getCount();
 						fop.write(res.getData());
 						if(res.getCount() < res.BUF_SIZE){
 							fop.close();
