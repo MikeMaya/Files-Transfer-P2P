@@ -17,9 +17,9 @@ class Respuesta{
 	public byte[] getByteRepr() {
 		ByteBuffer bb = ByteBuffer.allocate(BUF_SIZE+8);
 		bb.order(ByteOrder.LITTLE_ENDIAN);
-		bb.put(data);
-		bb.putInt(count);
-		bb.putInt(result);
+		bb.put(data, 0, BUF_SIZE);
+		bb.putInt(BUF_SIZE, count);
+		bb.putInt(BUF_SIZE+4, result);
 		return bb.array();
 	}
 
