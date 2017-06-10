@@ -290,10 +290,13 @@ class servicio extends Thread{
 						res = new Respuesta();
 						res.getClassFromBytes(p2.getData());
 						offset+= res.getCount();
-						fop.write(res.getData());
 						if(res.getCount() < res.BUF_SIZE){
+							fop.write(res.getData(), 0 , res.getCount());
 							fop.close();
 							ban=false;
+						}
+						else {
+							fop.write(res.getData());
 						}
 					} catch (SocketTimeoutException ste){
        					ste.printStackTrace();	
