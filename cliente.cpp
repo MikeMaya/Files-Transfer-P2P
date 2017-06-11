@@ -25,7 +25,7 @@ vector<string> IPS;
 //Parametros globales
 string directorio="/home/Carpeta/";
 string basura="/home/Basura/";
-string direccionBroadcast="192.168.43.255";
+string direccionBroadcast="192.168.1.255";
 string eliminando="";
 int puertoServicios=7744;
 int puertoEliminar=7745;
@@ -398,6 +398,6 @@ void* manejoDirectorios(void* args){
         pedirFaltantes(s);
         //verificarCambios(archivos);
         eliminar();
-        sleep(1);
+        sleep(5);
     }
 }
