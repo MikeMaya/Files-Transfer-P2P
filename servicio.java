@@ -381,7 +381,7 @@ class servicio extends Thread{
 				anunciarPropios(s);
 				pedirFaltantes(s);
 				eliminar();
-				Thread.sleep(1000);
+				Thread.sleep(5000);
 			}
 		}catch(SocketException se){
 			se.printStackTrace();
