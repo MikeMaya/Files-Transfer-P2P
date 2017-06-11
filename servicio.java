@@ -187,7 +187,7 @@ class servicio extends Thread{
                         Path path = Paths.get(filename);
                         Files.deleteIfExists(path);
                         
-                        Archivos.remove(pet.nombre);
+                        Archivos.remove(pet.getNombre());
                         bufferCon[0] = 1;
                         paqcon.setData(bufferCon);
                         paqcon.setAddress(paqpet.getAddress());
@@ -338,7 +338,7 @@ class servicio extends Thread{
 	            System.out.println("Eliminando "+actual);
 	            for(int j = 0; j<IPSnow.size(); j++){
 	            	b = pet.getByteRepr();
-	                DatagramPacket petElim =  new DatagramPacket(b, b.length, InetAddress.getByName(IPSnow.get(j)), puertoEliminar);
+	                DatagramPacket petElim =  new DatagramPacket(b, b.length, InetAddress.getByName(IPSnow.get(j)), puertoEscucha);
 	                for(int k=0; k<noFallos; k++){                 
 	                    try{
 							s.send(petElim); //envia(peticion);
@@ -365,6 +365,7 @@ class servicio extends Thread{
 	                System.out.println("El fichero no puede ser borrado");
 	            eliminando="";
 	        }
+	        s.close();
         } catch(SocketException se){
         	se.printStackTrace();
         } catch(UnknownHostException uhe){
