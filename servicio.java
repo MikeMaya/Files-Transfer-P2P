@@ -240,7 +240,9 @@ class servicio extends Thread{
 		String actual;
 		Peticion pet = new Peticion(2);
 		Respuesta res = new Respuesta();
-		Vector direcciones;
+        Queue<String> auxiliar = new LinkedList<>();
+		Vector<String> direcciones;
+        Vector<Integer> fallos;
 		String dir;
 
 		int i=0, e, offset;
@@ -260,6 +262,9 @@ class servicio extends Thread{
 			i=0;
 			pet.setNombre(actual);
 			direcciones= Archivos.get(actual);
+            fallos = new Vector<>(direcciones.size());
+            for(int j=0;j<direcciones.size();j++)
+                fallos.set(j, 0);
 			noIPS= direcciones.size();
 			byte [] b;
 			byte [] buff;
@@ -279,7 +284,12 @@ class servicio extends Thread{
 					System.out.println("Paquete "+offset+" - "+dir);
 					if(dir.isEmpty()){
 						System.out.println("Direccion no encontrada para "+actual);
-						Pendientes.add(actual);
+						auxiliar.add(actual);
+                        fop.close();
+                        if( file.delete() )
+                            System.out.println("  Se ha borrado");
+                        else
+                            System.out.println("  No se pudo borrar");
 						break;
 					}
 					b= pet.getByteRepr();
@@ -301,6 +311,11 @@ class servicio extends Thread{
 							fop.write(res.getData());
 						}
 					} catch (SocketTimeoutException ste){
+                        fallos.set(i, fallos.get(i)+1);
+                        if( fallos.get(i) == noFallos ){
+                            desconectar(direcciones.get(i));
+                            fallos.set(i, 0);
+                        }
        					ste.printStackTrace();	
        				} 
 					catch(UnknownHostException uhe){
@@ -317,6 +332,9 @@ class servicio extends Thread{
 			}
 			
 		}
+
+        while( auxiliar.peek() != null )
+            Pendientes.add(auxiliar.remove());
 	}
 
 	public void eliminar(){
