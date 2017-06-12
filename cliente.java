@@ -12,8 +12,8 @@ class cliente{
 
 
 	public static void main(String args[]) throws Exception{
-		if( args.length != 2 ){
-			System.out.println("Uso: java cliente carpeta_nodo carpeta_basura");
+		if( args.length != 2 && args.length != 3 ){
+			System.out.println("Uso: java cliente carpeta_nodo carpeta_basura [ip_broadcast]");
 			return;
 		}
 
@@ -25,6 +25,10 @@ class cliente{
 		if( basura.charAt(basura.length() - 1) != '/' )
 			basura += "/";
 
+		String dirBroad = "192.168.0.255";
+		if( args.length == 3 )
+			dirBroad = args[2];
+
 		Hashtable<String, Vector> Archivos= new Hashtable<String, Vector>();
 		Queue<String> Pendientes = new LinkedList<String>();
 		Vector IPS = new Vector();
@@ -35,10 +39,10 @@ class cliente{
 		servicio escuchar= new servicio(3);
 		servicio manejoDirectorios= new servicio(4);
 
-		detectarServicios.setEstructuras(Archivos, Pendientes, IPS, directorio, basura);
-		broadcast.setEstructuras(Archivos, Pendientes, IPS, directorio, basura);
-		escuchar.setEstructuras(Archivos, Pendientes, IPS, directorio, basura);
-		manejoDirectorios.setEstructuras(Archivos, Pendientes, IPS, directorio, basura);
+		detectarServicios.setEstructuras(Archivos, Pendientes, IPS, directorio, basura, dirBroad);
+		broadcast.setEstructuras(Archivos, Pendientes, IPS, directorio, basura, dirBroad);
+		escuchar.setEstructuras(Archivos, Pendientes, IPS, directorio, basura, dirBroad);
+		manejoDirectorios.setEstructuras(Archivos, Pendientes, IPS, directorio, basura, dirBroad);
 
 		//Seteamos el socket compartido
 		detectarServicios.setSocket(socketServicio);

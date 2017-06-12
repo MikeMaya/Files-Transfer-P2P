@@ -23,9 +23,9 @@ class servicio extends Thread{
 	private static final int E_BAD_PARAM   =  -2;
 	private static final int E_IO          =  -3;
 
-	String directorio="C:/Carpeta/";
-	String basura="C:/Basura/";
-	String dirBroad="192.168.1.255";
+	String directorio;
+	String basura;
+	String dirBroad;
 	InetAddress direccionBroadcast = null;
 	String eliminando="";
 
@@ -48,12 +48,13 @@ class servicio extends Thread{
 		}
 	}
 
-	public void setEstructuras(Hashtable<String, Vector> a, Queue<String>  p, Vector i, String d, String b){
+	public void setEstructuras(Hashtable<String, Vector> a, Queue<String>  p, Vector i, String d, String b, String bc){
 		Archivos= a;
 		Pendientes = p;
 		IPS = i;
         directorio = d;
         basura = b;
+        dirBroad = bc;
 	}
 
 	public void setSocket(DatagramSocket s){
@@ -264,7 +265,7 @@ class servicio extends Thread{
 			direcciones= Archivos.get(actual);
             fallos = new Vector<>(direcciones.size());
             for(int j=0;j<direcciones.size();j++)
-                fallos.set(j, 0);
+                fallos.add(0);
 			noIPS= direcciones.size();
 			byte [] b;
 			byte [] buff;
@@ -299,6 +300,7 @@ class servicio extends Thread{
 						DatagramPacket p2= new DatagramPacket(buff, buff.length);
 						socket.send(p);
 						socket.receive(p2);
+                        fallos.set(i, 0);
 						res = new Respuesta();
 						res.getClassFromBytes(p2.getData());
 						offset+= res.getCount();
