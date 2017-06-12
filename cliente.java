@@ -12,6 +12,13 @@ class cliente{
 
 
 	public static void main(String args[]) throws Exception{
+		if( args.length != 2 ){
+			System.out.println("Uso: java cliente carpeta_nodo carpeta_basura");
+			return;
+		}
+
+		String directorio = args[0];
+		String basura = args[1];
 
 		Hashtable<String, Vector> Archivos= new Hashtable<String, Vector>();
 		Queue<String> Pendientes = new LinkedList<String>();
@@ -23,10 +30,10 @@ class cliente{
 		servicio escuchar= new servicio(3);
 		servicio manejoDirectorios= new servicio(4);
 
-		detectarServicios.setEstructuras(Archivos, Pendientes, IPS);
-		broadcast.setEstructuras(Archivos, Pendientes, IPS);
-		escuchar.setEstructuras(Archivos, Pendientes, IPS);
-		manejoDirectorios.setEstructuras(Archivos, Pendientes, IPS);
+		detectarServicios.setEstructuras(Archivos, Pendientes, IPS, directorio, basura);
+		broadcast.setEstructuras(Archivos, Pendientes, IPS, directorio, basura);
+		escuchar.setEstructuras(Archivos, Pendientes, IPS, directorio, basura);
+		manejoDirectorios.setEstructuras(Archivos, Pendientes, IPS, directorio, basura);
 
 		//Seteamos el socket compartido
 		detectarServicios.setSocket(socketServicio);

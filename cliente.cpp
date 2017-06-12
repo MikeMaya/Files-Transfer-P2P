@@ -56,8 +56,21 @@ void* broadcast(void*);
 void* escuchar(void*);
 void* manejoDirectorios(void*);
 
-int main(){
-	
+int main(int argc, const char *argv[]){
+
+    if(argc != 3){
+        printf("%s\n", "Uso: ./cliente carpeta_nodo carpeta_basura");
+        exit(1);
+    }
+
+    directorio = string(argv[1]);
+    if( directorio[directorio.length() - 1] != '/' )
+        directorio += "/";
+
+    basura = string(argv[2]);
+    if( basura[basura.length() - 1] != '/' )
+        basura += "/";
+    
     if(socketServicio.setBroadcast() < 0){
         return 0;
     }

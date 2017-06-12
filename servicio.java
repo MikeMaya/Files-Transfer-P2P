@@ -48,10 +48,12 @@ class servicio extends Thread{
 		}
 	}
 
-	public void setEstructuras(Hashtable<String, Vector> a, Queue<String>  p, Vector i){
+	public void setEstructuras(Hashtable<String, Vector> a, Queue<String>  p, Vector i, String d, String b){
 		Archivos= a;
 		Pendientes = p;
 		IPS = i;
+        directorio = d;
+        basura = b;
 	}
 
 	public void setSocket(DatagramSocket s){
