@@ -98,7 +98,7 @@ class servicio extends Thread{
 	        try{
 	        	//System.out.println("Enviando Direccion");
 	        	socketServicio.send(p);
-		        Thread.sleep(5000);
+		        Thread.sleep(30000);
 	        }catch(IOException ioe){
 	        	ioe.printStackTrace();
 	        }catch(InterruptedException ie){
@@ -383,7 +383,7 @@ class servicio extends Thread{
 				anunciarPropios(s);
 				pedirFaltantes(s);
 				eliminar();
-				Thread.sleep(5000);
+				Thread.sleep(10000);
 			}
 		}catch(SocketException se){
 			se.printStackTrace();

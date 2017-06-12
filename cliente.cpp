@@ -192,7 +192,7 @@ void* broadcast(void*){
         //cout<<"Enviando mi direccion\n";
         PaqueteDatagrama  p((char *)num, 2*sizeof(int), (char*) direccionBroadcast.c_str(), puertoServicios); 
         socketServicio.envia(p);
-        sleep(5);
+        sleep(30);
         //IPS.clear();
     }
 }
@@ -411,6 +411,6 @@ void* manejoDirectorios(void* args){
         pedirFaltantes(s);
         //verificarCambios(archivos);
         eliminar();
-        sleep(5);
+        sleep(10);
     }
 }

@@ -18,7 +18,12 @@ class cliente{
 		}
 
 		String directorio = args[0];
+		if( directorio.charAt(directorio.length() - 1) != '/' )
+			directorio += "/";
+
 		String basura = args[1];
+		if( basura.charAt(basura.length() - 1) != '/' )
+			basura += "/";
 
 		Hashtable<String, Vector> Archivos= new Hashtable<String, Vector>();
 		Queue<String> Pendientes = new LinkedList<String>();
