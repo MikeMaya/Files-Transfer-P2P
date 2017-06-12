@@ -25,7 +25,7 @@ vector<string> IPS;
 //Parametros globales
 string directorio="/home/Carpeta/";
 string basura="/home/Basura/";
-string direccionBroadcast="192.168.1.255";
+string direccionBroadcast="192.168.0.255";
 string eliminando="";
 int puertoServicios=7744;
 int puertoEliminar=7745;
@@ -58,7 +58,7 @@ void* manejoDirectorios(void*);
 
 int main(int argc, const char *argv[]){
 
-    if(argc != 3){
+    if(argc < 3){
         printf("%s\n", "Uso: ./cliente carpeta_nodo carpeta_basura");
         exit(1);
     }
@@ -71,6 +71,9 @@ int main(int argc, const char *argv[]){
     if( basura[basura.length() - 1] != '/' )
         basura += "/";
     
+    if(argc == 4)
+        direccionBroadcast = string(argv[3]);
+
     if(socketServicio.setBroadcast() < 0){
         return 0;
     }
@@ -340,6 +343,7 @@ void pedirFaltantes(SocketDatagrama& socket){
                 //cout<<"Respuesta recibida"<<endl;
                 memcpy(&res, p2.obtieneDatos(),sizeof(Respuesta));    
                 offset+=res.count;                
+                fallos[i]=0;
                 archivo.write(res.data, res.count);
                 if(res.count< BUF_SIZE){
                     archivo.close();
