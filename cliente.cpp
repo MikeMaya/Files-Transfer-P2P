@@ -286,6 +286,7 @@ void pedirFaltantes(SocketDatagrama& socket){
     Peticion pet;
     Respuesta res;
     vector<string> direcciones;
+    queue<string> auxiliar;
     string dir;
 
     pet.codigo=2;
@@ -306,6 +307,7 @@ void pedirFaltantes(SocketDatagrama& socket){
         strcpy(pet.nombre, actual.c_str());
         direcciones= Archivos[actual];
         noIPS=direcciones.size();
+        vector<int> fallos(noIPS, 0);
         //cout<<"Pidiendo "<<actual<<endl;
         //Creamos el archivo
         ofstream archivo;
@@ -318,10 +320,15 @@ void pedirFaltantes(SocketDatagrama& socket){
             //No exite direccion Conectada que tenga ese archivo
             if(dir.empty()){
                 //cout<<"NO ES POSIBLE ENCONTRAR DIRECCION PARA: "<<actual<<"\n";
-                //Esto deberia de mostrarse una excepcion o asi... no se me ha ocurrido nada
-                Pendientes.push(actual);
+                archivo.close();
+                if( remove((directorio+actual).c_str()) == -1 ){
+                    cout << "Error al remover archivo \"" << pet.nombre << "\"" << endl;
+                }
+                auxiliar.push(actual);
+                ban=false;
                 break; 
             }
+
             cout<<offset<<" - "<<dir<<endl;
             PaqueteDatagrama p((char *)&pet, sizeof(Peticion),(char*) dir.c_str(), puertoEscucha); 
             PaqueteDatagrama p2(sizeof(Respuesta));
@@ -338,9 +345,19 @@ void pedirFaltantes(SocketDatagrama& socket){
                     archivo.close();
                     ban=false;
                 }
+            }else {
+                fallos[i]++;
+                if(fallos[i]==noFallos){
+                    desconectar(direcciones[i]);
+                    fallos[i]=0;
+                }
             }
             i= (i+1)%noIPS;
         }
+    }
+    while(!auxiliar.empty()){
+        Pendientes.push(auxiliar.front());
+        auxiliar.pop();
     }
     //cout<<"Terminando pendientes\n";
     return;
