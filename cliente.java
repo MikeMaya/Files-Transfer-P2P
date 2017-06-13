@@ -34,15 +34,15 @@ class cliente{
 		Vector IPS = new Vector();
 
 		DatagramSocket socketServicio=new DatagramSocket(7744);	
-		servicio detectarServicios = new servicio(1);
-		servicio broadcast= new servicio(2);
-		servicio escuchar= new servicio(3);
-		servicio manejoDirectorios= new servicio(4);
+		servicio detectarServicios = new servicio(1, dirBroad);
+		servicio broadcast= new servicio(2, dirBroad);
+		servicio escuchar= new servicio(3, dirBroad);
+		servicio manejoDirectorios= new servicio(4, dirBroad);
 
-		detectarServicios.setEstructuras(Archivos, Pendientes, IPS, directorio, basura, dirBroad);
-		broadcast.setEstructuras(Archivos, Pendientes, IPS, directorio, basura, dirBroad);
-		escuchar.setEstructuras(Archivos, Pendientes, IPS, directorio, basura, dirBroad);
-		manejoDirectorios.setEstructuras(Archivos, Pendientes, IPS, directorio, basura, dirBroad);
+		detectarServicios.setEstructuras(Archivos, Pendientes, IPS, directorio, basura);
+		broadcast.setEstructuras(Archivos, Pendientes, IPS, directorio, basura);
+		escuchar.setEstructuras(Archivos, Pendientes, IPS, directorio, basura);
+		manejoDirectorios.setEstructuras(Archivos, Pendientes, IPS, directorio, basura);
 
 		//Seteamos el socket compartido
 		detectarServicios.setSocket(socketServicio);

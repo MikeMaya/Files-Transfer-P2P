@@ -25,7 +25,6 @@ class servicio extends Thread{
 
 	String directorio;
 	String basura;
-	String dirBroad;
 	InetAddress direccionBroadcast = null;
 	String eliminando="";
 
@@ -39,22 +38,21 @@ class servicio extends Thread{
 
 	int tipo;
 
-	public servicio(int t){
+	public servicio(int t, String bc){
 		try{
 			tipo=t;
-			direccionBroadcast = InetAddress.getByName(dirBroad);		
+			direccionBroadcast = InetAddress.getByName(bc);		
 		}catch(IOException ioe){
 			System.out.println("ERRROR EN CREAR EL SOCKET");
 		}
 	}
 
-	public void setEstructuras(Hashtable<String, Vector> a, Queue<String>  p, Vector i, String d, String b, String bc){
+	public void setEstructuras(Hashtable<String, Vector> a, Queue<String>  p, Vector i, String d, String b){
 		Archivos= a;
 		Pendientes = p;
 		IPS = i;
         directorio = d;
         basura = b;
-        dirBroad = bc;
 	}
 
 	public void setSocket(DatagramSocket s){
